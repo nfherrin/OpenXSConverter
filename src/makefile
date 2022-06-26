@@ -28,20 +28,20 @@ CONTRIB := ../../../contrib
 #rule declaration. Add these items to FILTER
 #-----------------------------------------------------------------------------------
 SRC := \
-				main.f95 \
-				globals.f95 \
-        precisions.f95 \
-				outfuncs.f95 \
-				string_module.f95 \
-				infuncs.f95
+				main.f90 \
+				globals.f90 \
+        precisions.f90 \
+				outfuncs.f90 \
+				string_module.f90 \
+				infuncs.f90
 
-OBJ := $(SRC:.f95=.o)
+OBJ := $(SRC:.f90=.o)
 MOD := $(OBJ:.o=.mod)
 
 FILTER := \
 
-OBJ_FILTER := $(FILTER:.f95=.o)
-MOD_FILTER := $(FILTER:.f95=.mod)
+OBJ_FILTER := $(FILTER:.f90=.o)
+MOD_FILTER := $(FILTER:.f90=.mod)
 
 #h5 datafiles inclusion
 LIB=usr/lib/x86_64-linux-gnu/hdf5/serial
@@ -77,10 +77,10 @@ reset: clean
 #-----------------------------------------------------------------------------------
 #Generics for source files
 #-----------------------------------------------------------------------------------
-$(filter-out $(OBJ_FILTER), $(OBJ)): %.o:	%.f95
+$(filter-out $(OBJ_FILTER), $(OBJ)): %.o:	%.f90
 	$(FC) -c $(OPT) $< -I/$(INC) -L/$(LIB) -lhdf5_fortran -lhdf5
 
-$(filter-out $(MOD_FILTER), $(MOD)):	%.mod:	%.f95
+$(filter-out $(MOD_FILTER), $(MOD)):	%.mod:	%.f90
 	$(FC) -c $(OPT) $< -I/$(INC) -L/$(LIB) -lhdf5_fortran -lhdf5
 
 $(EXE): $(OBJ)
@@ -93,11 +93,11 @@ $(EXE): $(OBJ)
 
 #-----------------------------------------------------------------------------------
 #Dependency List
-#Use [gfortran -M -cpp *.f95] repeatedly until clean compile to update rules below
+#Use [gfortran -M -cpp *.f90] repeatedly until clean compile to update rules below
 #-----------------------------------------------------------------------------------
-globals.o globals.mod: globals.f95
-infuncs.o infuncs.mod: infuncs.f95 globals.mod string_module.mod
-main.o: main.f95 globals.mod infuncs.mod outfuncs.mod
-outfuncs.o outfuncs.mod: outfuncs.f95 globals.mod
-precisions.o precisions.mod: precisions.f95
-string_module.o string_module.mod: string_module.f95 precisions.mod
+globals.o globals.mod: globals.f90
+infuncs.o infuncs.mod: infuncs.f90 globals.mod string_module.mod
+main.o: main.f90 globals.mod infuncs.mod outfuncs.mod
+outfuncs.o outfuncs.mod: outfuncs.f90 globals.mod
+precisions.o precisions.mod: precisions.f90
+string_module.o string_module.mod: string_module.f90 precisions.mod
