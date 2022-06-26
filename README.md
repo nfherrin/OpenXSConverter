@@ -30,3 +30,12 @@ Currently, the OpenXSConverter only supports the following input/output formats:
 There are also plans to add the following formats for input/output as well:
 * MPACT/VERA - Export controls allowing.
 * MCNP - Export controls allowing.
+
+---
+## Examples
+---
+
+The folder `examples` contains an example of an OpenMC generated cross section, `example.h5`, that has been converted to both OpenMC input, `example.py`, as well as THOR cross sections `example.xs`.
+These cross sections are from a nonphysical 5 cm sphere of 1 kg/cm^3 pure U235 surrounded by another 5 cm of 1 kg/cm^3 hydrogen.
+These particular cross sections have 3 energy groups and P4 scattering.
+The OpenMC generated XS as well as the THOR XS can be converted to either THOR or OpenMC output by the user if they so wish to compare to the examples in the folder.

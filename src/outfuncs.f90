@@ -37,7 +37,7 @@ CONTAINS
     WRITE(32,'(A,I0,A,I0,A,I0)')'THOR_XS_V1 ',nummats,' ',numgroups,' ',levelanis
     !output the energy group structure
     WRITE(tchar1,'(10000ES20.12)')eg_struc(1:numgroups)
-    WRITE(32,'(A)')TRIM(ADJUSTL(tchar1))
+    WRITE(32,'(A,ES20.12)')TRIM(ADJUSTL(tchar1)),0.0
     !output the xs data
     DO m=1,nummats
       WRITE(32,'(A,I0)')'id ',m
