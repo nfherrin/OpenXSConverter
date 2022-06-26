@@ -3,18 +3,18 @@ An open source utility to convert various publicly available macroscopic nuclear
 
 This converter takes one of several different input XS formats and converts them to one of several different output XS formats.
 
-To compile the XS converter, navigate to the source folder and then make the converter by typing:
+To compile OpenXSConverter, navigate to the source folder and then make the converter by typing:
 ```
   >> make
 ```
-A successful compilation of the XS converter will conclude with the line:
+A successful compilation of OpenXSConverter will conclude with the line:
 ```
   >> mv ./OpenXSConverter.exe ../
 ```
 
-To run the XS converter, simply invoke the XS converter binary and follow it immediately with the XS input file followed by the XS output format (where `<xs_in>` is the name of the XS input file and `<out_form>` is the output format):
+To run OpenXSConverter, simply invoke the OpenXSConverter binary and follow it immediately with the XS input file followed by the XS output format (where `<xs_in>` is the name of the XS input file and `<out_form>` is the output format):
 ```
-  >> <path_to_XS_Converter>/XS_Converter.exe <xs_in> <out_form>
+  >> <path_to_OpenXSConverterr>/OpenXSConverter.exe <xs_in> <out_form>
 ```
 The output file will be titled `<xs_in>_<out_form>.out` unless the output is for an HDF5 format (such as OpenMC cross sections), in which case it will be of the form `<xs_in>_<out_form>.out.h5`.
 
