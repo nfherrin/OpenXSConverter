@@ -1,2 +1,2 @@
 # Open_XS_Converter
-An open source converter for various publicly available cross section formats
+An open source utility to convert various publicly available macroscopic nuclear cross section formats
