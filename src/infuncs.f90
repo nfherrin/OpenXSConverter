@@ -1,3 +1,4 @@
+!OpenXSConverter is licensed under the MIT License.
 !input functions
 MODULE infuncs
   USE HDF5

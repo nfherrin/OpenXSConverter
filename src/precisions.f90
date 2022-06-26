@@ -1,3 +1,4 @@
+!OpenXSConverter is licensed under the MIT License.
 MODULE PRECISIONS
 
   ! Real kinds

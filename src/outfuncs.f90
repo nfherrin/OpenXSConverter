@@ -1,3 +1,4 @@
+!OpenXSConverter is licensed under the MIT License.
 !output functions
 MODULE outfuncs
   USE globals

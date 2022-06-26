@@ -1,3 +1,4 @@
+!OpenXSConverter is licensed under the MIT License.
 !globals module
 MODULE globals
   IMPLICIT NONE

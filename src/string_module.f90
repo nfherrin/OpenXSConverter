@@ -1,4 +1,4 @@
-!OpenNodal is licensed under the MIT License.
+!OpenXSConverter is licensed under the MIT License.
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief Module for manipulating strings.
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!

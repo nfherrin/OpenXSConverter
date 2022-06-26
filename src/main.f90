@@ -1,3 +1,4 @@
+!OpenXSConverter is licensed under the MIT License.
 !-------------------------------------------------------------------------------
 ! OpenXSConverter to convert different XS formats back and forth
 !> @author Nicholas F. Herring
