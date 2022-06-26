@@ -43,6 +43,10 @@ FILTER := \
 OBJ_FILTER := $(FILTER:.f95=.o)
 MOD_FILTER := $(FILTER:.f95=.mod)
 
+#h5 datafiles inclusion
+LIB=usr/lib/x86_64-linux-gnu/hdf5/serial
+INC=usr/include/hdf5/serial
+
 #-----------------------------------------------------------------------------------
 #Phony targets for cleaning and building
 #-----------------------------------------------------------------------------------
@@ -74,13 +78,13 @@ reset: clean
 #Generics for source files
 #-----------------------------------------------------------------------------------
 $(filter-out $(OBJ_FILTER), $(OBJ)): %.o:	%.f95
-	$(FC) -c $(OPT) $<
+	$(FC) -c $(OPT) $< -I/$(INC) -L/$(LIB) -lhdf5_fortran -lhdf5
 
 $(filter-out $(MOD_FILTER), $(MOD)):	%.mod:	%.f95
-	$(FC) -c $(OPT) $<
+	$(FC) -c $(OPT) $< -I/$(INC) -L/$(LIB) -lhdf5_fortran -lhdf5
 
 $(EXE): $(OBJ)
-	$(FC) -o $@$(TYPE)$(EXT) $(OPT) $(OBJ)
+	$(FC) -o $@$(TYPE)$(EXT) $(OPT) $(OBJ) -I/$(INC) -L/$(LIB) -lhdf5_fortran -lhdf5
 	mv ./$(EXE)$(TYPE)$(EXT) ../
 
 #-----------------------------------------------------------------------------------
