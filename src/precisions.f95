@@ -1,4 +1,4 @@
-MODULE PRECISION
+MODULE PRECISIONS
 
   ! Real kinds
 
@@ -15,4 +15,4 @@ MODULE PRECISION
   INTEGER, PARAMETER :: kc4 = kr4                            ! single precision complex
   INTEGER, PARAMETER :: kc8 = kr8                            ! double precision complex
 
-END MODULE PRECISION
+END MODULE PRECISIONS

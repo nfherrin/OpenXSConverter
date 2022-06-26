@@ -30,9 +30,9 @@ CONTRIB := ../../../contrib
 SRC := \
 				main.f95 \
 				globals.f95 \
-        precision.f95 \
+        precisions.f95 \
 				outfuncs.f95 \
-				stringmod.f95 \
+				string_module.f95 \
 				infuncs.f95
 
 OBJ := $(SRC:.f95=.o)
@@ -92,8 +92,8 @@ $(EXE): $(OBJ)
 #Use [gfortran -M -cpp *.f95] repeatedly until clean compile to update rules below
 #-----------------------------------------------------------------------------------
 globals.o globals.mod: globals.f95
-infuncs.o infuncs.mod: infuncs.f95 globals.mod stringmod.mod
+infuncs.o infuncs.mod: infuncs.f95 globals.mod string_module.mod
 main.o: main.f95 globals.mod infuncs.mod outfuncs.mod
 outfuncs.o outfuncs.mod: outfuncs.f95 globals.mod
-precision.o precision.mod: precision.f95
-stringmod.o stringmod.mod: stringmod.f95 precision.mod
+precisions.o precisions.mod: precisions.f95
+string_module.o string_module.mod: string_module.f95 precisions.mod

@@ -1,7 +1,7 @@
 !input functions
 MODULE infuncs
   USE globals
-  USE stringmod
+  USE string_module
   IMPLICIT NONE
 
   PRIVATE
