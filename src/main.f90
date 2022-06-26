@@ -1,8 +1,8 @@
 !-------------------------------------------------------------------------------
-! THOR XS converter to convert different XS formats back and forth
+! OpenXSConverter to convert different XS formats back and forth
 !> @author Nicholas F. Herring
 !-------------------------------------------------------------------------------
-PROGRAM thor_xs_converter
+PROGRAM openxsconverter
   USE globals
   USE infuncs
   USE outfuncs
@@ -19,4 +19,4 @@ PROGRAM thor_xs_converter
   CALL outputxs()
 
   WRITE(*,'(A)')'XS Converter completed! No detected errors in conversion.'
-END PROGRAM thor_xs_converter
+END PROGRAM openxsconverter
