@@ -163,14 +163,14 @@ CONTAINS
       IF(tchar1 .EQ. 'GC_UNIVERSE_NAME')THEN
         m=m+1
 
-        !total xs comes first
-        CALL getserpv2xsdata('INF_TOT',sigmat(m,:))
-        !then absorption xs
+        !absorption xs comes first
         CALL getserpv2xsdata('INF_ABS',sigmaa(m,:))
         !then fission xs
         CALL getserpv2xsdata('INF_FISS',sigmaf(m,:))
         !then nuf
         CALL getserpv2xsdata('INF_NUBAR',nuf(m,:))
+        !then scattering production
+        CALL getserpv2xsdata('INF_SCATTP0',sigmat(m,:))
         !then chi
         CALL getserpv2xsdata('INF_CHIT',chi(m,:))
         !then sigmass values for each scattering order
@@ -182,6 +182,8 @@ CONTAINS
         CALL getserpv2scatdata('INF_SP5',sigmas(m,6,:,:))
         CALL getserpv2scatdata('INF_SP6',sigmas(m,7,:,:))
         CALL getserpv2scatdata('INF_SP7',sigmas(m,8,:,:))
+        !reset sigmat to not have an implicit negative abs XS
+        sigmat(m,:)=sigmat(m,:)+sigmaa(m,:)
       ENDIF
       IF(m .GE. nummats)EXIT
     ENDDO
