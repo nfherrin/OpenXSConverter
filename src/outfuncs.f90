@@ -25,7 +25,7 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   SUBROUTINE out_thor()
     INTEGER :: ios,m,gp,l
-    CHARACTER(64) :: tchar1
+    CHARACTER(10000) :: tchar1
 
     !open xsout file
     OPEN(UNIT=32,FILE=xsout,STATUS='REPLACE',ACTION='WRITE',IOSTAT=ios,IOMSG=tchar1)

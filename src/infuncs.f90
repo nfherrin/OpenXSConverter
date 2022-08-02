@@ -122,9 +122,8 @@ CONTAINS
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   SUBROUTINE read_serp_v2()
-    CHARACTER(1000) :: tchar1
-    INTEGER :: ios,nwords,m
-    CHARACTER(100) :: words(2000)
+    CHARACTER(100) :: tchar1
+    INTEGER :: ios,m
 
     numgroups=0
     nummats=0
@@ -138,9 +137,7 @@ CONTAINS
       IF(tchar1 .EQ. "MACRO_NG")THEN
         IF(numgroups .EQ. 0)THEN
           BACKSPACE(22)
-          READ(22,'(A20000)')tchar1
-          CALL parse(tchar1,"=",words,nwords)
-          READ(words(2),*)numgroups
+          READ(22,*)tchar1,tchar1,tchar1,tchar1,numgroups
           ALLOCATE(eg_struc(numgroups+1))
           eg_struc=0.0
         ENDIF
@@ -149,11 +146,7 @@ CONTAINS
       IF(tchar1 .EQ. "MACRO_E")THEN
         IF(ALLOCATED(eg_struc))THEN
           BACKSPACE(22)
-          READ(22,'(A20000)')tchar1
-          CALL parse(tchar1,"=",words,nwords)
-          tchar1=words(2)
-          CALL parse(tchar1,"[",words,nwords)
-          READ(words(2),*)eg_struc(:)
+          READ(22,*)tchar1,tchar1,tchar1,tchar1,tchar1,tchar1,eg_struc(:)
         ENDIF
       ENDIF
     ENDDO
@@ -198,20 +191,15 @@ CONTAINS
   SUBROUTINE getserpv2xsdata(xsID,xsvec)
     CHARACTER(*),INTENT(IN) :: xsID
     REAL(8) :: xsvec(numgroups)
-    CHARACTER(20000) :: tchar1
-    INTEGER :: nwords,g
-    CHARACTER(100) :: words(2000)
+    REAL(8) :: tvec(numgroups*2)
+    CHARACTER(100) :: tchar1
+    INTEGER :: g
 
     !get the xs data
     CALL find_line(xsID)
-    READ(22,'(A20000)')tchar1
-    CALL parse(tchar1,'=',words,nwords)
-    tchar1=words(2)
-    CALL parse(tchar1,'[',words,nwords)
-    tchar1=TRIM(ADJUSTL(words(2)))
-    CALL parse(tchar1,' ',words,nwords)
+    READ(22,*)tchar1,tchar1,tchar1,tchar1,tchar1,tchar1,tvec(:)
     DO g=1,numgroups
-      READ(words(g*2-1),*)xsvec(g)
+      xsvec(g)=tvec(g*2-1)
     ENDDO
   ENDSUBROUTINE getserpv2xsdata
 
@@ -219,21 +207,16 @@ CONTAINS
   SUBROUTINE getserpv2scatdata(xsID,xsvec)
     CHARACTER(*),INTENT(IN) :: xsID
     REAL(8) :: xsvec(numgroups,numgroups)
-    CHARACTER(20000) :: tchar1
-    INTEGER :: nwords,g,gp
-    CHARACTER(100) :: words(2000)
+    REAL(8) :: tvec(2*numgroups**2)
+    CHARACTER(100) :: tchar1
+    INTEGER :: g,gp
 
     !get the xs data
     CALL find_line(xsID)
-    READ(22,'(A20000)')tchar1
-    CALL parse(tchar1,'=',words,nwords)
-    tchar1=words(2)
-    CALL parse(tchar1,'[',words,nwords)
-    tchar1=TRIM(ADJUSTL(words(2)))
-    CALL parse(tchar1,' ',words,nwords)
+    READ(22,*)tchar1,tchar1,tchar1,tchar1,tchar1,tchar1,tvec
     DO g=1,numgroups
       DO gp=1,numgroups
-        READ(words((g-1)*numgroups*2+gp*2-1),*)xsvec(gp,g)
+        xsvec(gp,g)=tvec((g-1)*numgroups*2+gp*2-1)
       ENDDO
     ENDDO
   ENDSUBROUTINE getserpv2scatdata
