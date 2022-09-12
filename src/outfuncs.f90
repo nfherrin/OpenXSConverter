@@ -10,6 +10,11 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !based on xs output format, call the xs out-putter
   SUBROUTINE outputxs()
+    INTEGER :: i
+
+    DO i=1,numgroups
+      IF(eg_struc(i) .GE. 20.0D0)eg_struc(i)=20.0D0
+    ENDDO
     SELECTCASE(outformat)
       CASE('thor')
         CALL out_thor()
@@ -62,7 +67,107 @@ CONTAINS
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   SUBROUTINE out_mcnp()
-    STOP 'out_mcnp not yet complete'
+        CHARACTER(64)::tempcharacter
+        REAL(8)::tempreal
+        REAL(8),ALLOCATABLE::xsarray(:)
+        INTEGER::ios,i,j,g,arrleng,fission,arrloc,k
+
+        IF(levelanis .GT. 0)WRITE(*,*)'Warning MCNPOUT not supported for anisotropic scattering but higher order was found'
+
+        DO i=1,nummats
+            WRITE(xsout,'(A,I0)')'xs_'//TRIM(xsin)//'_'//TRIM(outformat)//'.mat',i
+            !open xsout file
+            OPEN(UNIT=32,FILE=xsout,STATUS='REPLACE',ACTION='WRITE',IOSTAT=ios,IOMSG=tempcharacter)
+            IF(ios .NE. 0)THEN
+                WRITE(*,*)tempcharacter
+                STOP
+            END IF
+
+            fission=0
+            tempreal=0
+            arrloc=1
+            DO j=1,numgroups
+                DO g=1,numgroups
+                    tempreal=tempreal+chi(i,g)*sigmaf(i,j)*nuf(i,j)
+                END DO
+            END DO
+            !determine array length
+            IF(tempreal .GT. 0)fission=1
+            IF(fission .EQ. 0)THEN
+                arrleng=numgroups**2+numgroups*4+3
+            ELSE
+                arrleng=numgroups**2+numgroups*7+3
+            END IF
+
+            !build xs array (very complex, see MCNP5 manual Appendix F for details)
+            !may comment better later
+            !some may claim my method here is very "hacky" and "not well documented". those people are correct
+            ALLOCATE(xsarray(arrleng))
+            xsarray=0
+            DO j=1,numgroups
+                xsarray(arrloc)=(eg_struc(j)+eg_struc(j+1))/2.0D0
+                arrloc=arrloc+1
+            END DO
+            DO j=1,numgroups
+                xsarray(arrloc)=eg_struc(j)-eg_struc(j+1)
+                arrloc=arrloc+1
+            END DO
+            DO j=1,numgroups
+                xsarray(arrloc)=sigmat(i,j)
+                arrloc=arrloc+1
+            END DO
+            IF(fission .EQ. 1)THEN
+                DO j=1,numgroups
+                    xsarray(arrloc)=sigmaf(i,j)
+                    arrloc=arrloc+1
+                END DO
+                DO j=1,numgroups
+                    xsarray(arrloc)=nuf(i,j)
+                    arrloc=arrloc+1
+                END DO
+                DO j=1,numgroups
+                    xsarray(arrloc)=chi(i,j)
+                    arrloc=arrloc+1
+                END DO
+            END IF
+            DO j=1,numgroups
+                xsarray(arrloc)=sigmat(i,j)-sigmaf(i,j)-SUM(sigmas(i,1,:,j))
+                arrloc=arrloc+1
+            END DO
+
+            xsarray(arrloc)=arrloc+1
+            arrloc=arrloc+1
+            DO j=1,numgroups
+                DO g=1,numgroups
+                    xsarray(arrloc)=sigmas(i,1,g,j)
+                    arrloc=arrloc+1
+                END DO
+            END DO
+
+            !print out data
+            WRITE(32,'(A,I0,A)')'  ',1110+i,'.00m  1.0 '
+            WRITE(32,'(A,I0,A,I0,3A,I0,A,ES11.4)')'  in MCNP: xs',i,' 111',i,'.00m 1.0 ',TRIM(xsout)&
+                &,' 0 1 1 ',arrleng,' 0 0',0.0
+            WRITE(32,*)
+            WRITE(32,*)
+            WRITE(32,*)
+            WRITE(32,*)
+            WRITE(32,'(8I9)')arrleng,1110+i,0,0,numgroups,numgroups-1,&
+                &numgroups-1,0
+            WRITE(32,'(8I9)')0,fission,0,1,0,0,0,0
+            WRITE(32,'(8I9)')1,1+2*numgroups,fission*(1+numgroups*3),fission*(1+numgroups*4),&
+                &fission*(1+5*numgroups),1+3*numgroups+3*fission*numgroups,0,0
+            WRITE(32,'(8I9)')0,0,0,0,arrleng-numgroups**2-2,0,0,&
+                &arrleng-1
+            WRITE(32,'(8I9)')arrleng,0,0,0,0,0,0,0
+            WRITE(32,'(8I9)')0,0,0,0,0,0,0,0
+            WRITE(32,'(4ES20.13)')xsarray(:)
+            WRITE(32,*)
+            DEALLOCATE(xsarray)
+
+            CLOSE(32)
+        END DO
+
   ENDSUBROUTINE out_mcnp
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

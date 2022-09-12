@@ -128,6 +128,7 @@ CONTAINS
     numgroups=0
     nummats=0
     levelanis=7
+    ios=0
     !find the number of materials and number of energy groups
     DO WHILE(ios .EQ. 0)
       READ(22,*,IOSTAT=ios)tchar1
