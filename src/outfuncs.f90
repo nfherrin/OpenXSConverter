@@ -77,7 +77,6 @@ CONTAINS
     !JXS values
     INTEGER :: LERG,LTOT,LFISS,LNU,LCHI,LABS,LP0L,LXPNL,LPNL
 
-    levelanis=0
     NLEG=21
     ALLOCATE(equi_bins(nummats,numgroups,numgroups,NLEG))
     equi_bins=0.0D0
@@ -216,23 +215,95 @@ CONTAINS
   SUBROUTINE compute_equi_cos_bins(equi_bins,NLEG)
     REAL(8), INTENT(OUT) :: equi_bins(:,:,:,:)
     INTEGER, INTENT(IN) :: NLEG
-    INTEGER :: i,g,j,l
+    REAL(8) :: h,x,x_old,int_1,int_2
+    INTEGER :: i,g,j,l,count
 
+    h=1.0D-5 !this is what we will step integrate with using simpson's rule until we reach the next segment
     equi_bins=0.0D0
-    IF(levelanis .EQ. 0)THEN
-      DO i=1,nummats
-        DO g=1,numgroups
-          DO j=1,numgroups
-            DO l=1,NLEG
-              equi_bins(i,g,j,l)=-1.0D0+(l-1)*2.0D0/(1.0D0*NLEG-1)
+    DO i=1,nummats
+      DO g=1,numgroups
+        DO j=1,numgroups
+          IF(sigmas(i,1,g,j) .GT. 0.0D0)THEN
+            !generates the probability cosine bins based on the given cross sections for the left half
+            equi_bins(i,g,j,1)=-1.0D0
+            x_old=-1.0D0
+            x=x_old
+            DO l=2,(NLEG-1)/2
+              count=0
+              int_1=0.0D0
+              DO
+                int_1=int_1+h/6.0D0*(xs_normalized(i,g,j,x)+xs_normalized(i,g,j,x+h)+4.0*xs_normalized(i,g,j,x+h/2.0D0))
+                count=count+1
+                x=x_old+count*h
+                IF(1.0D0/(NLEG-1.0D0)-int_1 .LT. 0.0D0)THEN
+                  int_2=int_1-h/6.0D0*(xs_normalized(i,g,j,x-h)+xs_normalized(i,g,j,x)+4.0*xs_normalized(i,g,j,x-h/2.0D0))
+                  !interpolate to get a better result
+                  x=x-(1.0D0/(NLEG-1.0D0)-int_1)*h/(int_2-int_1)
+                  EXIT
+                ENDIF
+              ENDDO
+              x_old=x
+              equi_bins(i,g,j,l)=x
             ENDDO
-          ENDDO
+            !generates the probability cosine bins based on the given cross sections for the right half (splitting like this helps avoid accumulation of roundoff error)
+            equi_bins(i,g,j,NLEG)=1.0D0
+            x_old=1.0D0
+            x=x_old
+            DO l=NLEG-1,(NLEG-1)/2+1,-1
+              count=0
+              int_1=0.0D0
+              DO
+                int_1=int_1+h/6.0D0*(xs_normalized(i,g,j,x)+xs_normalized(i,g,j,x-h)+4.0*xs_normalized(i,g,j,x-h/2.0D0))
+                count=count+1
+                x=x_old-count*h
+                IF(1.0D0/(NLEG-1.0D0)-int_1 .LT. 0.0D0)THEN
+                  int_2=int_1-h/6.0D0*(xs_normalized(i,g,j,x+h)+xs_normalized(i,g,j,x)+4.0*xs_normalized(i,g,j,x+h/2.0D0))
+                  x=x+(1.0D0/(NLEG-1.0D0)-int_1)*h/(int_2-int_1)
+                  EXIT
+                ENDIF
+              ENDDO
+              x_old=x
+              equi_bins(i,g,j,l)=x
+            ENDDO
+          ELSE
+            !if the scattering is 0, set it all to equal
+            DO l=1,NLEG
+              equi_bins(i,g,j,l)=-1.0D0+(l-1.0D0)/(NLEG-1.0D0)
+            ENDDO
+          ENDIF
         ENDDO
       ENDDO
-    ELSE
-      STOP 'anisotropic calculation of equiprobable cosine bins not yet complete'
-    ENDIF
+    ENDDO
   ENDSUBROUTINE compute_equi_cos_bins
+
+  !computes a Legendre polynomial using the recurrence relation
+  REAL(8) FUNCTION p_l(n,x)
+    REAL(8), INTENT(IN) :: x
+    INTEGER, INTENT(IN) :: n
+    REAL(8) :: p_l_n(n+1)
+    INTEGER :: i
+
+    p_l_n(1)=1.0D0
+    IF(n .GT. 0)THEN
+      p_l_n(2)=x
+      DO i=1,n-1
+        p_l_n(i+2)=((2.0D0*i+1.0D0)*x*p_l_n(i+1) - i*p_l_n(i))/(i+1.0D0)
+      ENDDO
+    ENDIF
+    p_l=p_l_n(n+1)
+  ENDFUNCTION p_l
+
+  !computes the normalized value of the cross section at point x
+  REAL(8) FUNCTION xs_normalized(i,g,j,x)
+    REAL(8),INTENT(IN) :: x
+    INTEGER, INTENT(IN) :: i,g,j
+    INTEGER :: l
+
+    xs_normalized=0.0D0
+    DO l=1,levelanis+1
+      xs_normalized=xs_normalized+sigmas(i,l,g,j)*p_l(l-1,x)/(sigmas(i,1,g,j)*2.0D0)
+    ENDDO
+  ENDFUNCTION xs_normalized
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   SUBROUTINE out_openmc()
