@@ -304,9 +304,8 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   SUBROUTINE read_openmc()
     INTEGER :: err1,m
-    INTEGER(HID_T) :: file_id,group_id,dataset_id,dataspace_id,temp_hid1(3),temp_hid2(3)
-    CHARACTER(1) :: rootname
-    CHARACTER(64) :: main_group,cell_group
+    INTEGER(HID_T) :: file_id,dataset_id,dataspace_id,temp_hid1(3),temp_hid2(3)
+    CHARACTER(64) :: cell_group
 
     CALL h5open_f(err1)
     IF (err1 .LT. 0) THEN
@@ -343,7 +342,7 @@ CONTAINS
     IF (err1 .LT. 0) THEN
       STOP " *** Error getting number of energy groups"
     ENDIF
-    numgroups=temp_hid1(1)
+    numgroups=INT(temp_hid1(1),4)
 
     !determine level of anisotropy
     CALL h5dopen_f(file_id,'/cell/1/scatter matrix/average',dataset_id,err1)
@@ -365,7 +364,7 @@ CONTAINS
       IF (err1 .LT. 0) THEN
         STOP " *** Error getting number of energy groups"
       ENDIF
-      levelanis=temp_hid1(1)-1
+      levelanis=INT(temp_hid1(1)-1,4)
     ELSE
       STOP 'bad number of anisotropy determinants, only use legendre orders!'
     ENDIF
@@ -434,7 +433,7 @@ CONTAINS
     REAL(8),INTENT(OUT) :: scat_arr(:,:,:)
     INTEGER(HID_T) :: dataset_id,datatype_id,dataspace_id
     INTEGER(HSIZE_T) :: dims(3)
-    INTEGER :: err1,l
+    INTEGER :: err1
 
     CALL h5dopen_f(file_id,group_char,dataset_id,err1)
     IF (err1 .LT. 0) THEN
