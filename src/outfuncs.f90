@@ -131,7 +131,7 @@ CONTAINS
                 END DO
             END IF
             DO j=1,numgroups
-                xsarray(arrloc)=sigmat(i,j)-sigmaf(i,j)-SUM(sigmas(i,1,:,j))
+                xsarray(arrloc)=sigmaa(i,j)
                 arrloc=arrloc+1
             END DO
 
