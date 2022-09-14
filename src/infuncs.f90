@@ -14,10 +14,11 @@ CONTAINS
   !Gets command line arguments
   SUBROUTINE readcl()
     INTEGER::arg_count
+    CHARACTER(64) :: tchar1
     arg_count=COMMAND_ARGUMENT_COUNT()
 
-    IF(arg_count .GT. 2)STOP 'Only two argument variables are allowed for this program! &
-        &"xsin" "outformat"'
+    IF(arg_count .GT. 3)STOP 'Only three argument variables are allowed for this program! &
+        &"xsin" "outformat" "anis_ord_out"'
 
     !either use or prompt for input file name
     IF(arg_count .GE. 1)THEN
@@ -41,13 +42,21 @@ CONTAINS
     END IF
     outformat=TRIM(ADJUSTL(lowercase(outformat)))
 
+    !either use or prompt for output file name
+    IF(arg_count .GE. 3)THEN
+        CALL GET_COMMAND_ARGUMENT(3, tchar1)
+        READ(tchar1,*)anis_out
+    ELSE
+        anis_out=-999
+    END IF
+
     xsout=TRIM(xsin)//'_'//TRIM(outformat)//'.out'
   ENDSUBROUTINE readcl
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !Get xs format and call the xs reader based on format
   SUBROUTINE readxs()
-    INTEGER :: ios,nwords
+    INTEGER :: ios,nwords,i
     CHARACTER(1000) :: tchar1,informat
     CHARACTER(100) :: words(200)
 
@@ -111,6 +120,19 @@ CONTAINS
         WRITE(*,'(3A)')'ERROR: ',TRIM(informat),' not a known input xs format.'
         STOP 'Fatal error'
     ENDSELECT
+    IF(anis_out .EQ. -999)THEN
+      anis_out=levelanis
+    ELSE
+      IF(anis_out .GT. levelanis)THEN
+        WRITE(*,'(A,I0,A,I0,A)')'WARNING: Requested Pn order ',anis_out,' greater than available Pn order ',levelanis,'!'
+        WRITE(*,'(A,I0,A)')'Defaulting to maximum available Pn order ',levelanis,'.'
+        anis_out=levelanis
+      ENDIF
+    ENDIF
+    DO i=1,nummats
+      IF(MAXVAL(chi(i,:)) .LE. 1.0D-12)chi(i,1)=1.0D0
+      chi(i,:)=chi(i,:)/SUM(chi(i,:))
+    ENDDO
     !close the input file
     CLOSE(22)
   ENDSUBROUTINE readxs

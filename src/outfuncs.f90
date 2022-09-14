@@ -40,7 +40,7 @@ CONTAINS
     ENDIF
 
     !output the xs characteristics
-    WRITE(32,'(A,I0,A,I0,A,I0)')'THOR_XS_V1 ',nummats,' ',numgroups,' ',levelanis
+    WRITE(32,'(A,I0,A,I0,A,I0)')'THOR_XS_V1 ',nummats,' ',numgroups,' ',anis_out
     !output the energy group structure
     WRITE(tchar1,'(10000ES20.12)')eg_struc(1:numgroups)
     WRITE(32,'(A,ES20.12)')TRIM(ADJUSTL(tchar1)),0.0
@@ -55,7 +55,7 @@ CONTAINS
       WRITE(32,'(A)')TRIM(ADJUSTL(tchar1))
       WRITE(tchar1,'(10000ES16.8)')sigmat(m,:)
       WRITE(32,'(A)')TRIM(ADJUSTL(tchar1))
-      DO l=1,levelanis+1
+      DO l=1,anis_out+1
         DO gp=1,numgroups
           WRITE(32,'(10000ES16.8)')sigmas(m,l,gp,:)
         ENDDO
@@ -77,10 +77,13 @@ CONTAINS
     !JXS values
     INTEGER :: LERG,LTOT,LFISS,LNU,LCHI,LABS,LP0L,LXPNL,LPNL
 
-    NLEG=21
+    NLEG=5
     ALLOCATE(equi_bins(nummats,numgroups,numgroups,NLEG))
     equi_bins=0.0D0
     CALL compute_equi_cos_bins(equi_bins,NLEG)
+    LFISS=0
+    LNU=0
+    LCHI=0
 
     DO i=1,nummats
       WRITE(xsout,'(A,I0)')'xs_'//TRIM(xsin)//'_'//TRIM(outformat)//'.mat',i
@@ -223,7 +226,7 @@ CONTAINS
     DO i=1,nummats
       DO g=1,numgroups
         DO j=1,numgroups
-          IF(sigmas(i,1,g,j) .GT. 0.0D0)THEN
+          IF(sigmas(i,1,g,j) .GT. 0.0D0 .AND. anis_out .NE. 0)THEN
             !generates the probability cosine bins based on the given cross sections for the left half
             equi_bins(i,g,j,1)=-1.0D0
             x_old=-1.0D0
@@ -268,7 +271,7 @@ CONTAINS
           ELSE
             !if the scattering is 0, set it all to equal
             DO l=1,NLEG
-              equi_bins(i,g,j,l)=-1.0D0+(l-1.0D0)/(NLEG-1.0D0)
+              equi_bins(i,g,j,l)=-1.0D0+(l-1.0D0)*2.0D0/(NLEG-1.0D0)
             ENDDO
           ENDIF
         ENDDO
@@ -300,7 +303,7 @@ CONTAINS
     INTEGER :: l
 
     xs_normalized=0.0D0
-    DO l=1,levelanis+1
+    DO l=1,anis_out+1
       xs_normalized=xs_normalized+sigmas(i,l,g,j)*p_l(l-1,x)/(sigmas(i,1,g,j)*2.0D0)
     ENDDO
   ENDFUNCTION xs_normalized
@@ -309,6 +312,7 @@ CONTAINS
   SUBROUTINE out_openmc()
     INTEGER :: ios,g,m,gp,l
     CHARACTER(64) :: tchar1
+
     !open xsout file
     OPEN(UNIT=32,FILE=xsout,STATUS='REPLACE',ACTION='WRITE',IOSTAT=ios,IOMSG=tchar1)
     IF(ios .NE. 0)THEN
@@ -338,7 +342,7 @@ CONTAINS
     DO m=1,nummats
       WRITE(32,'(A,I0,A)')'#Data for Material ',m,':'
       WRITE(32,'(A,I0,A,I0,A)')"mat",m,"_xsdat = openmc.XSdata('mat_",m,"', groups)"
-      WRITE(32,'(A,I0,A,I0)')"mat",m,"_xsdat.order = ",levelanis
+      WRITE(32,'(A,I0,A,I0)')"mat",m,"_xsdat.order = ",anis_out
       !total xs
       CALL print_xs_openmc(m,'total',sigmat(m,:))
       CALL print_xs_openmc(m,'absorption',sigmaa(m,:))
@@ -348,7 +352,7 @@ CONTAINS
       !print the scattering matrix, a bit more involved...
       WRITE(32,'(A)')'scatter_matrix = np.array(\'
       WRITE(32,'(A)',ADVANCE='NO')'    ['
-      DO l=1,levelanis+1
+      DO l=1,anis_out+1
         IF(l .NE. 1)WRITE(32,'(A)',ADVANCE='NO')'     '
         WRITE(32,'(A)',ADVANCE='NO')'['
         DO gp=1,numgroups
@@ -362,7 +366,7 @@ CONTAINS
           IF(gp .NE. numgroups)WRITE(32,'(A)')','
         ENDDO
         WRITE(32,'(A)',ADVANCE='NO')']'
-        IF(l .NE. levelanis+1)WRITE(32,'(A)')','
+        IF(l .NE. anis_out+1)WRITE(32,'(A)')','
       ENDDO
       WRITE(32,'(A)')'])'
       WRITE(32,'(A)')'scatter_matrix = np.transpose(scatter_matrix)'

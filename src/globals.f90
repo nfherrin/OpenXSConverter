@@ -7,8 +7,10 @@ MODULE globals
   INTEGER :: nummats
   !number of energy groups
   INTEGER :: numgroups
-  !level of anisotropy
+  !order of anisotropy found in the XS input file
   INTEGER :: levelanis
+  !order of anisotropy to actually output
+  INTEGER :: anis_out=-999
   !xs input filename
   CHARACTER(64) :: xsin
   !xs output filename
