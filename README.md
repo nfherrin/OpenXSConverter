@@ -12,12 +12,12 @@ A successful compilation of OpenXSConverter will conclude with the line:
   >> mv ./OpenXSConverter.exe ../
 ```
 
-To run OpenXSConverter, simply invoke the OpenXSConverter binary and follow it immediately with the XS input file followed by the XS output format (where `<xs_in>` is the name of the XS input file, `<out_form>` is the output format, and `<pn_ord>` is the $$P_n$$ order to use and is optional):
+To run OpenXSConverter, simply invoke the OpenXSConverter binary and follow it immediately with the XS input file followed by the XS output format (where `<xs_in>` is the name of the XS input file, `<out_form>` is the output format, and `<pn_ord>` is the $P_n$ order to use and is optional):
 ```
   >> <path_to_OpenXSConverterr>/OpenXSConverter.exe <xs_in> <out_form> <pn_ord>
 ```
 The output file will be titled `<xs_in>_<out_form>.out` unless the output is for an HDF5 format (such as OpenMC cross sections), in which case it will be of the form `<xs_in>_<out_form>.out.h5`.
-Note that if the optional parameter `<pn_ord>` is given, then that is the $$P_n$$ scattering order that OpenXSConverter will attempt to use for creating the output XS.
+Note that if the optional parameter `<pn_ord>` is given, then that is the $P_n$ scattering order that OpenXSConverter will attempt to use for creating the output XS.
 If `<pn_ord>` is greater than the scattering order available in the input file, then OpenXSConverter will throw a warning message and default to the scattering order available in the input file, if it is not given then OpenXSConverter will similarly default to he maximum available scattering order in the input file.
 
 Currently, the OpenXSConverter only supports the following input/output formats:
@@ -28,7 +28,7 @@ Currently, the OpenXSConverter only supports the following input/output formats:
 * Output formats:
   * `THOR` - [THOR XS format](https://github.com/NCSU-NCSG/THOR/raw/v1.0.0/docs/usermanual/CurrentVersion/usermanual.pdf).
   * `OpenMC` - Creates an initial [Python](https://www.python.org/) script for running with [OpenMC](https://docs.openmc.org/en/stable/). This script only contains the commands to create and use the cross sections so the user must either add it to an existing OpenMC script, or create one with this initial baseline by adding geometry, settings, etc.
-  * `MCNP` - [MCNP multigroup XS input format](https://mcnp.lanl.gov/pdf_files/la-12704.pdf). Note that the MCNP format uses 20 equi-probable cosine bins for anisotropic scattering, so the $$P_n$$ scattering approximation will not be perfectly preserved.
+  * `MCNP` - [MCNP multigroup XS input format](https://mcnp.lanl.gov/pdf_files/la-12704.pdf). Note that the MCNP format uses 20 equi-probable cosine bins for anisotropic scattering, so the $P_n$ scattering approximation will not be perfectly preserved.
 
 There are also plans to add the following formats for input/output as well:
 * MPACT/VERA.
@@ -38,6 +38,6 @@ There are also plans to add the following formats for input/output as well:
 ---
 
 The folder `examples` contains an example of an OpenMC generated cross section, `example.h5`, that has been converted to both OpenMC input, `example.py`, as well as THOR cross sections `example.xs`.
-These cross sections are from a nonphysical 5 cm sphere of 1 kg/cm$$^3$$ pure U235 surrounded by another 5 cm of 1 kg/cm$$^3$$ hydrogen.
-These particular cross sections have 3 energy groups and $$P_4$$ scattering.
+These cross sections are from a nonphysical 5 cm sphere of 1 kg/cm$^3$ pure U235 surrounded by another 5 cm of 1 kg/cm$^3$ hydrogen.
+These particular cross sections have 3 energy groups and $P_4$ scattering.
 The OpenMC generated XS as well as the THOR XS can be converted to either THOR or OpenMC output by the user if they so wish to compare to the examples in the folder.
