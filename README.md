@@ -14,7 +14,7 @@ A successful compilation of OpenXSConverter will conclude with the line:
 
 To run OpenXSConverter, simply invoke the OpenXSConverter binary and follow it immediately with the XS input file followed by the XS output format (where `<xs_in>` is the name of the XS input file, `<out_form>` is the output format, and `<pn_ord>` is the $P_n$ order to use and is optional):
 ```
-  >> <path_to_OpenXSConverterr>/OpenXSConverter.exe <xs_in> <out_form> <pn_ord>
+  >> <path_to_OpenXSConverter>/OpenXSConverter.exe <xs_in> <out_form> <pn_ord>
 ```
 The output file will be titled `<xs_in>_<out_form>.out` unless the output is for an HDF5 format (such as OpenMC cross sections), in which case it will be of the form `<xs_in>_<out_form>.out.h5`.
 Note that if the optional parameter `<pn_ord>` is given, then that is the $P_n$ scattering order that OpenXSConverter will attempt to use for creating the output XS.
