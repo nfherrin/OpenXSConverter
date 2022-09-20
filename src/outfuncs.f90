@@ -66,7 +66,7 @@ CONTAINS
   ENDSUBROUTINE out_thor
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!mcnp output, see MCNP5 Manual Volume 3 Developer's Manual Appendix F.VIII for the format of the multigroup transport table
+!mcnp output, see https://mcnp.lanl.gov/pdf_files/la-12704.pdf for the format of the multigroup transport table
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   SUBROUTINE out_mcnp()
     CHARACTER(64)::tempcharacter
@@ -77,7 +77,8 @@ CONTAINS
     !JXS values
     INTEGER :: LERG,LTOT,LFISS,LNU,LCHI,LABS,LP0L,LXPNL,LPNL
 
-    NLEG=5
+    !20 equi-probable cosine bins, change this if you want more/less
+    NLEG=21
     ALLOCATE(equi_bins(nummats,numgroups,numgroups,NLEG))
     equi_bins=0.0D0
     CALL compute_equi_cos_bins(equi_bins,NLEG)
@@ -195,15 +196,14 @@ CONTAINS
       WRITE(32,*)
       WRITE(32,*)
       !output the NXS array
-      WRITE(32,'(8I9)')LDB,1110+i,NLEG,0,numgroups,numgroups-1,&
-          &numgroups-1,0
+      WRITE(32,'(8I9)')LDB,1110+i,NLEG,0,numgroups,numgroups-1,numgroups-1,0
       WRITE(32,'(8I9)')0,1,0,1,0,0,0,0
       !output the JXS array
       WRITE(32,'(8I9)')LERG,LTOT,LFISS,LNU,LCHI,LABS,0,0
       WRITE(32,'(8I9)')0,0,0,0,LP0L,0,0,LXPNL
       WRITE(32,'(8I9)')LPNL,0,0,0,0,0,0,0
       WRITE(32,'(8I9)')0,0,0,0,0,0,0,0
-      WRITE(32,'(4ES21.13)')xsarray(:)
+      WRITE(32,'(4ES20.12)',ADVANCE='NO')xsarray(:)
       WRITE(32,*)
       DEALLOCATE(xsarray)
 

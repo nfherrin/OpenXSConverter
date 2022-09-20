@@ -37,12 +37,13 @@ CONTAINS
         WRITE(*,'(A)')'Output cross sections format? Available formats below:'
         WRITE(*,'(A)')'THOR'
         WRITE(*,'(A)')'OpenMC'
+        WRITE(*,'(A)')'MCNP'
         WRITE(*,'(A)',ADVANCE='NO')'> '
         READ(*,*)outformat
     END IF
     outformat=TRIM(ADJUSTL(lowercase(outformat)))
 
-    !either use or prompt for output file name
+    !either get the anisotropic scattering order or use what's in the file
     IF(arg_count .GE. 3)THEN
         CALL GET_COMMAND_ARGUMENT(3, tchar1)
         READ(tchar1,*)anis_out
@@ -120,7 +121,7 @@ CONTAINS
         WRITE(*,'(3A)')'ERROR: ',TRIM(informat),' not a known input xs format.'
         STOP 'Fatal error'
     ENDSELECT
-    IF(anis_out .EQ. -999)THEN
+    IF(anis_out .LT. 0)THEN
       anis_out=levelanis
     ELSE
       IF(anis_out .GT. levelanis)THEN
