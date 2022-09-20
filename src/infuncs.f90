@@ -14,10 +14,11 @@ CONTAINS
   !Gets command line arguments
   SUBROUTINE readcl()
     INTEGER::arg_count
+    CHARACTER(64) :: tchar1
     arg_count=COMMAND_ARGUMENT_COUNT()
 
-    IF(arg_count .GT. 2)STOP 'Only two argument variables are allowed for this program! &
-        &"xsin" "outformat"'
+    IF(arg_count .GT. 3)STOP 'Only three argument variables are allowed for this program! &
+        &"xsin" "outformat" "anis_ord_out"'
 
     !either use or prompt for input file name
     IF(arg_count .GE. 1)THEN
@@ -36,10 +37,19 @@ CONTAINS
         WRITE(*,'(A)')'Output cross sections format? Available formats below:'
         WRITE(*,'(A)')'THOR'
         WRITE(*,'(A)')'OpenMC'
+        WRITE(*,'(A)')'MCNP'
         WRITE(*,'(A)',ADVANCE='NO')'> '
         READ(*,*)outformat
     END IF
     outformat=TRIM(ADJUSTL(lowercase(outformat)))
+
+    !either get the anisotropic scattering order or use what's in the file
+    IF(arg_count .GE. 3)THEN
+        CALL GET_COMMAND_ARGUMENT(3, tchar1)
+        READ(tchar1,*)anis_out
+    ELSE
+        anis_out=-999
+    END IF
 
     xsout=TRIM(xsin)//'_'//TRIM(outformat)//'.out'
   ENDSUBROUTINE readcl
@@ -47,7 +57,7 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !Get xs format and call the xs reader based on format
   SUBROUTINE readxs()
-    INTEGER :: ios,nwords
+    INTEGER :: ios,nwords,i
     CHARACTER(1000) :: tchar1,informat
     CHARACTER(100) :: words(200)
 
@@ -111,6 +121,19 @@ CONTAINS
         WRITE(*,'(3A)')'ERROR: ',TRIM(informat),' not a known input xs format.'
         STOP 'Fatal error'
     ENDSELECT
+    IF(anis_out .LT. 0)THEN
+      anis_out=levelanis
+    ELSE
+      IF(anis_out .GT. levelanis)THEN
+        WRITE(*,'(A,I0,A,I0,A)')'WARNING: Requested Pn order ',anis_out,' greater than available Pn order ',levelanis,'!'
+        WRITE(*,'(A,I0,A)')'Defaulting to maximum available Pn order ',levelanis,'.'
+        anis_out=levelanis
+      ENDIF
+    ENDIF
+    DO i=1,nummats
+      IF(MAXVAL(chi(i,:)) .LE. 1.0D-12)chi(i,1)=1.0D0
+      chi(i,:)=chi(i,:)/SUM(chi(i,:))
+    ENDDO
     !close the input file
     CLOSE(22)
   ENDSUBROUTINE readxs
@@ -304,9 +327,8 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   SUBROUTINE read_openmc()
     INTEGER :: err1,m
-    INTEGER(HID_T) :: file_id,group_id,dataset_id,dataspace_id,temp_hid1(3),temp_hid2(3)
-    CHARACTER(1) :: rootname
-    CHARACTER(64) :: main_group,cell_group
+    INTEGER(HID_T) :: file_id,dataset_id,dataspace_id,temp_hid1(3),temp_hid2(3)
+    CHARACTER(64) :: cell_group
 
     CALL h5open_f(err1)
     IF (err1 .LT. 0) THEN
@@ -343,7 +365,7 @@ CONTAINS
     IF (err1 .LT. 0) THEN
       STOP " *** Error getting number of energy groups"
     ENDIF
-    numgroups=temp_hid1(1)
+    numgroups=INT(temp_hid1(1),4)
 
     !determine level of anisotropy
     CALL h5dopen_f(file_id,'/cell/1/scatter matrix/average',dataset_id,err1)
@@ -365,7 +387,7 @@ CONTAINS
       IF (err1 .LT. 0) THEN
         STOP " *** Error getting number of energy groups"
       ENDIF
-      levelanis=temp_hid1(1)-1
+      levelanis=INT(temp_hid1(1)-1,4)
     ELSE
       STOP 'bad number of anisotropy determinants, only use legendre orders!'
     ENDIF
@@ -434,7 +456,7 @@ CONTAINS
     REAL(8),INTENT(OUT) :: scat_arr(:,:,:)
     INTEGER(HID_T) :: dataset_id,datatype_id,dataspace_id
     INTEGER(HSIZE_T) :: dims(3)
-    INTEGER :: err1,l
+    INTEGER :: err1
 
     CALL h5dopen_f(file_id,group_char,dataset_id,err1)
     IF (err1 .LT. 0) THEN

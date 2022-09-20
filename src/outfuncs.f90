@@ -40,7 +40,7 @@ CONTAINS
     ENDIF
 
     !output the xs characteristics
-    WRITE(32,'(A,I0,A,I0,A,I0)')'THOR_XS_V1 ',nummats,' ',numgroups,' ',levelanis
+    WRITE(32,'(A,I0,A,I0,A,I0)')'THOR_XS_V1 ',nummats,' ',numgroups,' ',anis_out
     !output the energy group structure
     WRITE(tchar1,'(10000ES20.12)')eg_struc(1:numgroups)
     WRITE(32,'(A,ES20.12)')TRIM(ADJUSTL(tchar1)),0.0
@@ -55,7 +55,7 @@ CONTAINS
       WRITE(32,'(A)')TRIM(ADJUSTL(tchar1))
       WRITE(tchar1,'(10000ES16.8)')sigmat(m,:)
       WRITE(32,'(A)')TRIM(ADJUSTL(tchar1))
-      DO l=1,levelanis+1
+      DO l=1,anis_out+1
         DO gp=1,numgroups
           WRITE(32,'(10000ES16.8)')sigmas(m,l,gp,:)
         ENDDO
@@ -66,114 +66,253 @@ CONTAINS
   ENDSUBROUTINE out_thor
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!mcnp output, see https://mcnp.lanl.gov/pdf_files/la-12704.pdf for the format of the multigroup transport table
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   SUBROUTINE out_mcnp()
-        CHARACTER(64)::tempcharacter
-        REAL(8)::tempreal
-        REAL(8),ALLOCATABLE::xsarray(:)
-        INTEGER::ios,i,j,g,arrleng,fission,arrloc,k
+    CHARACTER(64)::tempcharacter
+    REAL(8),ALLOCATABLE::xsarray(:),equi_bins(:,:,:,:)
+    INTEGER::ios,i,j,g,l,arrloc
+    !NXS values
+    INTEGER :: LDB,NLEG
+    !JXS values
+    INTEGER :: LERG,LTOT,LFISS,LNU,LCHI,LABS,LP0L,LXPNL,LPNL
 
-        IF(levelanis .GT. 0)WRITE(*,*)'Warning MCNPOUT not supported for anisotropic scattering but higher order was found'
+    !20 equi-probable cosine bins, change this if you want more/less
+    NLEG=21
+    ALLOCATE(equi_bins(nummats,numgroups,numgroups,NLEG))
+    equi_bins=0.0D0
+    CALL compute_equi_cos_bins(equi_bins,NLEG)
+    LFISS=0
+    LNU=0
+    LCHI=0
 
-        DO i=1,nummats
-            WRITE(xsout,'(A,I0)')'xs_'//TRIM(xsin)//'_'//TRIM(outformat)//'.mat',i
-            !open xsout file
-            OPEN(UNIT=32,FILE=xsout,STATUS='REPLACE',ACTION='WRITE',IOSTAT=ios,IOMSG=tempcharacter)
-            IF(ios .NE. 0)THEN
-                WRITE(*,*)tempcharacter
-                STOP
-            END IF
+    DO i=1,nummats
+      WRITE(xsout,'(A,I0)')'xs_'//TRIM(xsin)//'_'//TRIM(outformat)//'.mat',i
+      !open xsout file
+      OPEN(UNIT=32,FILE=xsout,STATUS='REPLACE',ACTION='WRITE',IOSTAT=ios,IOMSG=tempcharacter)
+      IF(ios .NE. 0)THEN
+        WRITE(*,*)tempcharacter
+        STOP
+      END IF
 
-            fission=0
-            tempreal=0
-            arrloc=1
-            DO j=1,numgroups
-                DO g=1,numgroups
-                    tempreal=tempreal+chi(i,g)*sigmaf(i,j)*nuf(i,j)
-                END DO
-            END DO
-            !determine array length
-            IF(tempreal .GT. 0)fission=1
-            IF(fission .EQ. 0)THEN
-                arrleng=numgroups**2+numgroups*4+3
-            ELSE
-                arrleng=numgroups**2+numgroups*7+3
-            END IF
+      LDB=(2+NLEG)*numgroups**2+numgroups*7+3
 
-            !build xs array (very complex, see MCNP5 manual Appendix F for details)
-            !may comment better later
-            !some may claim my method here is very "hacky" and "not well documented". those people are correct
-            ALLOCATE(xsarray(arrleng))
-            xsarray=0
-            DO j=1,numgroups
-                xsarray(arrloc)=(eg_struc(j)+eg_struc(j+1))/2.0D0
-                arrloc=arrloc+1
-            END DO
-            DO j=1,numgroups
-                xsarray(arrloc)=eg_struc(j)-eg_struc(j+1)
-                arrloc=arrloc+1
-            END DO
-            DO j=1,numgroups
-                xsarray(arrloc)=sigmat(i,j)
-                arrloc=arrloc+1
-            END DO
-            IF(fission .EQ. 1)THEN
-                DO j=1,numgroups
-                    xsarray(arrloc)=sigmaf(i,j)
-                    arrloc=arrloc+1
-                END DO
-                DO j=1,numgroups
-                    xsarray(arrloc)=nuf(i,j)
-                    arrloc=arrloc+1
-                END DO
-                DO j=1,numgroups
-                    xsarray(arrloc)=chi(i,j)
-                    arrloc=arrloc+1
-                END DO
-            END IF
-            DO j=1,numgroups
-                xsarray(arrloc)=sigmaa(i,j)
-                arrloc=arrloc+1
-            END DO
+      !build xs array (very complex, see MCNP5 manual Appendix F for details)
+      ALLOCATE(xsarray(LDB))
+      xsarray=0
+      arrloc=1
 
-            xsarray(arrloc)=arrloc+1
+      !first block is the energy bounds
+      LERG=arrloc
+      DO j=1,numgroups
+        xsarray(arrloc)=(eg_struc(j)+eg_struc(j+1))/2.0D0
+        arrloc=arrloc+1
+      ENDDO
+
+      !second block is the energy group widths
+      DO j=1,numgroups
+        xsarray(arrloc)=eg_struc(j)-eg_struc(j+1)
+        arrloc=arrloc+1
+      ENDDO
+
+      !third block is the total cross section
+      LTOT=arrloc
+      DO j=1,numgroups
+          xsarray(arrloc)=sigmat(i,j)
+          arrloc=arrloc+1
+      ENDDO
+
+      !fourth block is fission cross section
+      LFISS=arrloc
+      DO j=1,numgroups
+        xsarray(arrloc)=sigmaf(i,j)
+        arrloc=arrloc+1
+      ENDDO
+
+      !fifth block is nu
+      LNU=arrloc
+      DO j=1,numgroups
+        xsarray(arrloc)=nuf(i,j)
+        arrloc=arrloc+1
+      ENDDO
+
+      !sixth block is fission spectrum
+      LCHI=arrloc
+      DO j=1,numgroups
+        xsarray(arrloc)=chi(i,j)
+        arrloc=arrloc+1
+      ENDDO
+
+      !seventh block is absorption XS
+      LABS=arrloc
+      DO j=1,numgroups
+        xsarray(arrloc)=sigmaa(i,j)
+        arrloc=arrloc+1
+      ENDDO
+
+      !eighth block is P0 scattering
+      LP0L=arrloc
+      xsarray(arrloc)=arrloc+1
+      arrloc=arrloc+1
+      DO j=1,numgroups
+        DO g=1,numgroups
+          xsarray(arrloc)=sigmas(i,1,g,j)
+          arrloc=arrloc+1
+        ENDDO
+      ENDDO
+
+      !ninth block is the XPN block
+      LXPNL=arrloc
+      xsarray(arrloc)=arrloc+1
+      arrloc=arrloc+1
+      ios=1
+      DO j=1,numgroups
+        DO g=1,numgroups
+          xsarray(arrloc)=ios
+          ios=ios+NLEG
+          arrloc=arrloc+1
+        ENDDO
+      ENDDO
+
+      !tenth block is the PN scattering
+      LPNL=arrloc
+      xsarray(arrloc)=arrloc+1
+      arrloc=arrloc+1
+      DO j=1,numgroups
+        DO g=1,numgroups
+          DO l=1,NLEG
+            xsarray(arrloc)=equi_bins(i,g,j,l)
             arrloc=arrloc+1
-            DO j=1,numgroups
-                DO g=1,numgroups
-                    xsarray(arrloc)=sigmas(i,1,g,j)
-                    arrloc=arrloc+1
-                END DO
-            END DO
+          ENDDO
+        ENDDO
+      ENDDO
 
-            !print out data
-            WRITE(32,'(A,I0,A)')'  ',1110+i,'.00m  1.0 '
-            WRITE(32,'(A,I0,A,I0,3A,I0,A,ES11.4)')'  in MCNP: xs',i,' 111',i,'.00m 1.0 ',TRIM(xsout)&
-                &,' 0 1 1 ',arrleng,' 0 0',0.0
-            WRITE(32,*)
-            WRITE(32,*)
-            WRITE(32,*)
-            WRITE(32,*)
-            WRITE(32,'(8I9)')arrleng,1110+i,0,0,numgroups,numgroups-1,&
-                &numgroups-1,0
-            WRITE(32,'(8I9)')0,fission,0,1,0,0,0,0
-            WRITE(32,'(8I9)')1,1+2*numgroups,fission*(1+numgroups*3),fission*(1+numgroups*4),&
-                &fission*(1+5*numgroups),1+3*numgroups+3*fission*numgroups,0,0
-            WRITE(32,'(8I9)')0,0,0,0,arrleng-numgroups**2-2,0,0,&
-                &arrleng-1
-            WRITE(32,'(8I9)')arrleng,0,0,0,0,0,0,0
-            WRITE(32,'(8I9)')0,0,0,0,0,0,0,0
-            WRITE(32,'(4ES20.13)')xsarray(:)
-            WRITE(32,*)
-            DEALLOCATE(xsarray)
+      !print out informative data
+      WRITE(32,'(A,I0,A)')'  ',1110+i,'.00m  1.0 '
+      WRITE(32,'(A,I0,A,I0,3A,I0,A,ES11.4)')'  in MCNP: xs',i,' 111',i,'.00m 1.0 ',TRIM(xsout)&
+          &,' 0 1 1 ',LDB,' 0 0',0.0
+      WRITE(32,*)
+      WRITE(32,*)
+      WRITE(32,*)
+      WRITE(32,*)
+      !output the NXS array
+      WRITE(32,'(8I9)')LDB,1110+i,NLEG,0,numgroups,numgroups-1,numgroups-1,0
+      WRITE(32,'(8I9)')0,1,0,1,0,0,0,0
+      !output the JXS array
+      WRITE(32,'(8I9)')LERG,LTOT,LFISS,LNU,LCHI,LABS,0,0
+      WRITE(32,'(8I9)')0,0,0,0,LP0L,0,0,LXPNL
+      WRITE(32,'(8I9)')LPNL,0,0,0,0,0,0,0
+      WRITE(32,'(8I9)')0,0,0,0,0,0,0,0
+      WRITE(32,'(4ES20.12)',ADVANCE='NO')xsarray(:)
+      WRITE(32,*)
+      DEALLOCATE(xsarray)
 
-            CLOSE(32)
-        END DO
+      CLOSE(32)
+    ENDDO
 
   ENDSUBROUTINE out_mcnp
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!compute equi-probable cosine bin boundaries based on the anisotropic approximation given
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  SUBROUTINE compute_equi_cos_bins(equi_bins,NLEG)
+    REAL(8), INTENT(OUT) :: equi_bins(:,:,:,:)
+    INTEGER, INTENT(IN) :: NLEG
+    REAL(8) :: h,x,x_old,int_1,int_2
+    INTEGER :: i,g,j,l,count
+
+    h=1.0D-5 !this is what we will step integrate with using simpson's rule until we reach the next segment
+    equi_bins=0.0D0
+    DO i=1,nummats
+      DO g=1,numgroups
+        DO j=1,numgroups
+          IF(sigmas(i,1,g,j) .GT. 0.0D0 .AND. anis_out .NE. 0)THEN
+            !generates the probability cosine bins based on the given cross sections for the left half
+            equi_bins(i,g,j,1)=-1.0D0
+            x_old=-1.0D0
+            x=x_old
+            DO l=2,(NLEG-1)/2
+              count=0
+              int_1=0.0D0
+              DO
+                int_1=int_1+h/6.0D0*(xs_normalized(i,g,j,x)+xs_normalized(i,g,j,x+h)+4.0*xs_normalized(i,g,j,x+h/2.0D0))
+                count=count+1
+                x=x_old+count*h
+                IF(1.0D0/(NLEG-1.0D0)-int_1 .LT. 0.0D0)THEN
+                  int_2=int_1-h/6.0D0*(xs_normalized(i,g,j,x-h)+xs_normalized(i,g,j,x)+4.0*xs_normalized(i,g,j,x-h/2.0D0))
+                  !interpolate to get a better result
+                  x=x-(1.0D0/(NLEG-1.0D0)-int_1)*h/(int_2-int_1)
+                  EXIT
+                ENDIF
+              ENDDO
+              x_old=x
+              equi_bins(i,g,j,l)=x
+            ENDDO
+            !generates the probability cosine bins based on the given cross sections for the right half (splitting like this helps avoid accumulation of roundoff error)
+            equi_bins(i,g,j,NLEG)=1.0D0
+            x_old=1.0D0
+            x=x_old
+            DO l=NLEG-1,(NLEG-1)/2+1,-1
+              count=0
+              int_1=0.0D0
+              DO
+                int_1=int_1+h/6.0D0*(xs_normalized(i,g,j,x)+xs_normalized(i,g,j,x-h)+4.0*xs_normalized(i,g,j,x-h/2.0D0))
+                count=count+1
+                x=x_old-count*h
+                IF(1.0D0/(NLEG-1.0D0)-int_1 .LT. 0.0D0)THEN
+                  int_2=int_1-h/6.0D0*(xs_normalized(i,g,j,x+h)+xs_normalized(i,g,j,x)+4.0*xs_normalized(i,g,j,x+h/2.0D0))
+                  x=x+(1.0D0/(NLEG-1.0D0)-int_1)*h/(int_2-int_1)
+                  EXIT
+                ENDIF
+              ENDDO
+              x_old=x
+              equi_bins(i,g,j,l)=x
+            ENDDO
+          ELSE
+            !if the scattering is 0, set it all to equal
+            DO l=1,NLEG
+              equi_bins(i,g,j,l)=-1.0D0+(l-1.0D0)*2.0D0/(NLEG-1.0D0)
+            ENDDO
+          ENDIF
+        ENDDO
+      ENDDO
+    ENDDO
+  ENDSUBROUTINE compute_equi_cos_bins
+
+  !computes a Legendre polynomial using the recurrence relation
+  REAL(8) FUNCTION p_l(n,x)
+    REAL(8), INTENT(IN) :: x
+    INTEGER, INTENT(IN) :: n
+    REAL(8) :: p_l_n(n+1)
+    INTEGER :: i
+
+    p_l_n(1)=1.0D0
+    IF(n .GT. 0)THEN
+      p_l_n(2)=x
+      DO i=1,n-1
+        p_l_n(i+2)=((2.0D0*i+1.0D0)*x*p_l_n(i+1) - i*p_l_n(i))/(i+1.0D0)
+      ENDDO
+    ENDIF
+    p_l=p_l_n(n+1)
+  ENDFUNCTION p_l
+
+  !computes the normalized value of the cross section at point x
+  REAL(8) FUNCTION xs_normalized(i,g,j,x)
+    REAL(8),INTENT(IN) :: x
+    INTEGER, INTENT(IN) :: i,g,j
+    INTEGER :: l
+
+    xs_normalized=0.0D0
+    DO l=1,anis_out+1
+      xs_normalized=xs_normalized+sigmas(i,l,g,j)*p_l(l-1,x)/(sigmas(i,1,g,j)*2.0D0)
+    ENDDO
+  ENDFUNCTION xs_normalized
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   SUBROUTINE out_openmc()
     INTEGER :: ios,g,m,gp,l
     CHARACTER(64) :: tchar1
+
     !open xsout file
     OPEN(UNIT=32,FILE=xsout,STATUS='REPLACE',ACTION='WRITE',IOSTAT=ios,IOMSG=tchar1)
     IF(ios .NE. 0)THEN
@@ -203,7 +342,7 @@ CONTAINS
     DO m=1,nummats
       WRITE(32,'(A,I0,A)')'#Data for Material ',m,':'
       WRITE(32,'(A,I0,A,I0,A)')"mat",m,"_xsdat = openmc.XSdata('mat_",m,"', groups)"
-      WRITE(32,'(A,I0,A,I0)')"mat",m,"_xsdat.order = ",levelanis
+      WRITE(32,'(A,I0,A,I0)')"mat",m,"_xsdat.order = ",anis_out
       !total xs
       CALL print_xs_openmc(m,'total',sigmat(m,:))
       CALL print_xs_openmc(m,'absorption',sigmaa(m,:))
@@ -213,7 +352,7 @@ CONTAINS
       !print the scattering matrix, a bit more involved...
       WRITE(32,'(A)')'scatter_matrix = np.array(\'
       WRITE(32,'(A)',ADVANCE='NO')'    ['
-      DO l=1,levelanis+1
+      DO l=1,anis_out+1
         IF(l .NE. 1)WRITE(32,'(A)',ADVANCE='NO')'     '
         WRITE(32,'(A)',ADVANCE='NO')'['
         DO gp=1,numgroups
@@ -227,7 +366,7 @@ CONTAINS
           IF(gp .NE. numgroups)WRITE(32,'(A)')','
         ENDDO
         WRITE(32,'(A)',ADVANCE='NO')']'
-        IF(l .NE. levelanis+1)WRITE(32,'(A)')','
+        IF(l .NE. anis_out+1)WRITE(32,'(A)')','
       ENDDO
       WRITE(32,'(A)')'])'
       WRITE(32,'(A)')'scatter_matrix = np.transpose(scatter_matrix)'

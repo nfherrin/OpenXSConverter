@@ -11,11 +11,11 @@ debug:    TYPE := _Debug
 catch:    TYPE := _Catch
 coverage: TYPE := _Coverage
 
-all:      OPT := -O3
+all:      OPT := -O3 -Wall -Werror
 MPparallel: OPT := -O3 -fopenmp
-debug:    OPT := -O0 -g -fbacktrace -ffpe-trap=zero,overflow,underflow -fcheck=all
+debug:    OPT := -O0 -g -fbacktrace -ffpe-trap=zero,overflow,underflow -fcheck=all -Wall -Werror
 catch:    OPT := -O0 -g -Wall -W -Wsurprising -Werror
-coverage: OPT := -O0 -g --coverage
+coverage: OPT := -O0 -g --coverage -Wall -Werror
 
 #-----------------------------------------------------------------------------------
 #Directory Paths
