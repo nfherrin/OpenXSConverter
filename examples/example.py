@@ -9,7 +9,7 @@ import openmc
 ###################################-Beginning of Cross Sections-####################################
 ####################################################################################################
 #Group structure:
-groups = openmc.mgxs.EnergyGroups([ 0.00000000E+00, 1.00000000E-06, 1.00000000E+01, 1.00000000E+08])
+groups = openmc.mgxs.EnergyGroups([ 0.00000000E+00, 2.00000000E-02, 6.32455532E+02, 2.00000000E+07])
 #Data for Material 1:
 mat1_xsdat = openmc.XSdata('mat_1', groups)
 mat1_xsdat.order = 4
@@ -43,7 +43,7 @@ mat2_xsdat.set_total([ 6.43263071E+03, 1.23102693E+04, 1.72299270E+04], temperat
 mat2_xsdat.set_absorption([ 1.06775052E+01, 2.14363767E+01, 1.69512795E+02], temperature=294.)
 mat2_xsdat.set_fission([ 0.00000000E+00, 0.00000000E+00, 0.00000000E+00], temperature=294.)
 mat2_xsdat.set_nu_fission([ 0.00000000E+00, 0.00000000E+00, 0.00000000E+00], temperature=294.)
-mat2_xsdat.set_chi([ 0.00000000E+00, 0.00000000E+00, 0.00000000E+00], temperature=294.)
+mat2_xsdat.set_chi([ 1.00000000E+00, 0.00000000E+00, 0.00000000E+00], temperature=294.)
 scatter_matrix = np.array(\
     [[[ 5.95079984E+03, 0.00000000E+00, 0.00000000E+00],
       [ 4.41369375E+02, 8.19167540E+03, 3.52281151E-01],

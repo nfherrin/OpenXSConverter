@@ -78,7 +78,7 @@ CONTAINS
     INTEGER :: LERG,LTOT,LFISS,LNU,LCHI,LABS,LP0L,LXPNL,LPNL
 
     !20 equi-probable cosine bins, change this if you want more/less
-    NLEG=21
+    NLEG=201
     ALLOCATE(equi_bins(nummats,numgroups,numgroups,NLEG))
     equi_bins=0.0D0
     CALL compute_equi_cos_bins(equi_bins,NLEG)
@@ -336,7 +336,8 @@ CONTAINS
         WRITE(32,'(A)')''
         WRITE(32,'(A)',ADVANCE='NO')'                          '
       ENDIF
-      WRITE(32,'(A,ES15.8)',ADVANCE='NO')',',eg_struc(numgroups-g)
+      !openmc input is in eV but we store in MeV, so convert
+      WRITE(32,'(A,ES15.8)',ADVANCE='NO')',',eg_struc(numgroups-g)*10**6
     ENDDO
     WRITE(32,'(A)')'])'
     DO m=1,nummats
