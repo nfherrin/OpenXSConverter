@@ -78,7 +78,7 @@ CONTAINS
     INTEGER :: LERG,LTOT,LFISS,LNU,LCHI,LABS,LP0L,LXPNL,LPNL
 
     !20 equi-probable cosine bins, change this if you want more/less
-    NLEG=201
+    NLEG=21
     ALLOCATE(equi_bins(nummats,numgroups,numgroups,NLEG))
     equi_bins=0.0D0
     CALL compute_equi_cos_bins(equi_bins,NLEG)

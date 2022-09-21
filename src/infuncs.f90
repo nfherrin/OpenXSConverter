@@ -398,9 +398,9 @@ CONTAINS
     eg_struc=0.0
 
     !generate logarithmically even groups (we store in terms of MeV)
-    WRITE(*,*)'WARNING: Energy data is not read in conversion from OpenMC'
-    WRITE(*,*)'Rather it is logarithmically generated from 20 MeV to 0.02 eV.'
-    WRITE(*,*)'User should adjust output accordingly if energy group structure is important for the application.'
+    WRITE(*,'(A)')'WARNING: Energy data is not read in conversion from OpenMC'
+    WRITE(*,'(A)')'Rather it is logarithmically generated from 20 MeV to 0.02 eV.'
+    WRITE(*,'(A)')'User should adjust output accordingly if energy group structure is important for the application.'
     DO m=1,numgroups
       eg_struc(m)=2.0D0*10**(1.0D0+(m-1.0D0)*(-9.0D0)/(numgroups-1.0D0))
     ENDDO
