@@ -324,8 +324,6 @@ CONTAINS
     WRITE(32,'(A)')
     WRITE(32,'(A)')'#INSTRUCTIONS: place these cross sections at the top of your OpenMC python script'
     WRITE(32,'(A)')'#OR build your script from this baseline'
-    WRITE(32,'(A)')'#If you wish to reduce the number of angular moments, do so manually in the script'
-    WRITE(32,'(A)')'#OR alter the XS input file'
     WRITE(32,'(A)')'####################################################################################################'
     WRITE(32,'(A)')'###################################-Beginning of Cross Sections-####################################'
     WRITE(32,'(A)')'####################################################################################################'
