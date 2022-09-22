@@ -321,6 +321,7 @@ CONTAINS
     ENDIF
     WRITE(32,'(A)')'import numpy as np'
     WRITE(32,'(A)')'import openmc'
+    WRITE(32,'(A)')'import os'
     WRITE(32,'(A)')
     WRITE(32,'(A)')'#INSTRUCTIONS: place these cross sections at the top of your OpenMC python script'
     WRITE(32,'(A)')'#OR build your script from this baseline'
