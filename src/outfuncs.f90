@@ -22,6 +22,8 @@ CONTAINS
         CALL out_mcnp()
       CASE('openmc')
         CALL out_openmc()
+      CASE('moose')
+        CALL out_moose()
       CASE DEFAULT
         STOP 'bad output format'
     ENDSELECT
@@ -419,4 +421,72 @@ CONTAINS
     ENDDO
     WRITE(32,'(A)')'], temperature=294.)'
   ENDSUBROUTINE print_xs_openmc
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  SUBROUTINE out_moose()
+    INTEGER :: ios,m,g
+    CHARACTER(64) :: tchar1
+
+    WRITE(*,'(A)')'NOTE: Given diffusion cross sections for MOOSE output are 1/(3*Sigma_t)'
+    IF(anis_out .GT. 0)THEN
+      WRITE(*,'(A,I0,A)')'WARNING! ',anis_out,' specified anisotropic XS, but for now MOOSE output &
+        &only supports isotropic scattering.'
+    ENDIF
+
+    !open xsout file
+    OPEN(UNIT=32,FILE=xsout,STATUS='REPLACE',ACTION='WRITE',IOSTAT=ios,IOMSG=tchar1)
+    IF(ios .NE. 0)THEN
+        WRITE(*,'(A)')tchar1
+        STOP
+    ENDIF
+
+    WRITE(32,'(A)')'<Materials>'
+    WRITE(32,'(A,I0,A)')'   <Macros NG="',numgroups,'">'
+    DO m=1,nummats
+      IF(MAXVAL(ABS(sigmaf(m,:))) .GT. 0)THEN
+        WRITE(32,'(A,I0,A)')'     <material ID="',m,'" fissile="true">'
+      ELSE
+        WRITE(32,'(A,I0,A)')'     <material ID="',m,'" fissile="false">'
+      ENDIF
+      WRITE(32,'(A,I0,A)')'        <name>mat_',m,'</name>'
+      WRITE(32,'(A)')'        <TotalXS>'
+      DO g=1,numgroups
+        WRITE(32,'(A,ES16.8)')'        ',sigmat(m,g)
+      ENDDO
+      WRITE(32,'(A)')'        </TotalXS>'
+      IF(MAXVAL(ABS(sigmaf(m,:))) .GT. 0)THEN
+        WRITE(32,'(A)')'        <NuFissionXS>'
+        DO g=1,numgroups
+          WRITE(32,'(A,ES16.8)')'        ',nuf(m,g)*sigmaf(m,g)
+        ENDDO
+        WRITE(32,'(A)')'        </NuFissionXS>'
+        WRITE(32,'(A)')'        <ChiXS>'
+        DO g=1,numgroups
+          WRITE(32,'(A,ES16.8)')'        ',chi(m,g)
+        ENDDO
+        WRITE(32,'(A)')'        </ChiXS>'
+        WRITE(32,'(A)')'        <FissionXS>'
+        DO g=1,numgroups
+          WRITE(32,'(A,ES16.8)')'        ',sigmaf(m,g)
+        ENDDO
+        WRITE(32,'(A)')'        </FissionXS>'
+      ENDIF
+      WRITE(32,'(A)')'        <ScatteringXS>'
+      DO g=1,numgroups
+        WRITE(32,'(A,10000ES16.8)')'        ',sigmas(m,1,g,:)
+      ENDDO
+      WRITE(32,'(A)')'        </ScatteringXS>'
+      WRITE(32,'(A)')'        <DiffusionCoefficient>'
+      DO g=1,numgroups
+        WRITE(32,'(A,ES16.8)')'        ',1.0D0/(3.0D0*sigmat(m,g))
+      ENDDO
+      WRITE(32,'(A)')'        </DiffusionCoefficient>'
+      WRITE(32,'(A)')'     </material>'
+    ENDDO
+    WRITE(32,'(A)')'    </Macros>'
+    WRITE(32,'(A)')'</Materials>'
+
+    !close the output file
+    CLOSE(32)
+  ENDSUBROUTINE out_moose
 END MODULE outfuncs

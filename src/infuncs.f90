@@ -38,6 +38,7 @@ CONTAINS
         WRITE(*,'(A)')'THOR'
         WRITE(*,'(A)')'OpenMC'
         WRITE(*,'(A)')'MCNP'
+        WRITE(*,'(A)')'MOOSE'
         WRITE(*,'(A)',ADVANCE='NO')'> '
         READ(*,*)outformat
     END IF
