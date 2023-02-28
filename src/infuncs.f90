@@ -328,7 +328,7 @@ CONTAINS
   SUBROUTINE read_openmc()
     INTEGER :: err1,m
     INTEGER(HID_T) :: file_id,dataset_id,dataspace_id,temp_hid1(3),temp_hid2(3)
-    CHARACTER(64) :: cell_group
+    CHARACTER(64) :: material_group
 
     CALL h5open_f(err1)
     IF (err1 .LT. 0) THEN
@@ -341,15 +341,15 @@ CONTAINS
     ENDIF
 
     !determine number of materials
-    CALL h5gn_members_f(file_id,'/cell/',nummats,err1)
+    CALL h5gn_members_f(file_id,'/material/',nummats,err1)
     IF (err1 .LT. 0) THEN
-      STOP " *** Error reading in cell numbers"
+      STOP " *** Error reading in material numbers"
     ELSEIF(nummats .LE. 0)THEN
-      STOP ' *** Error less that 1 cells found'
+      STOP ' *** Error less that 1 materials found'
     ENDIF
 
     !determine number of energy groups
-    CALL h5dopen_f(file_id,'/cell/1/total/average',dataset_id,err1)
+    CALL h5dopen_f(file_id,'/material/1/total/average',dataset_id,err1)
     IF (err1 .LT. 0) THEN
       STOP " *** Error opening HDF5 dataset"
     ENDIF
@@ -368,7 +368,7 @@ CONTAINS
     numgroups=INT(temp_hid1(1),4)
 
     !determine level of anisotropy
-    CALL h5dopen_f(file_id,'/cell/1/scatter matrix/average',dataset_id,err1)
+    CALL h5dopen_f(file_id,'/material/1/scatter matrix/average',dataset_id,err1)
     IF (err1 .LT. 0) THEN
       STOP " *** Error opening HDF5 dataset"
     ENDIF
@@ -406,17 +406,17 @@ CONTAINS
     ENDDO
 
     DO m=1,nummats
-      WRITE(cell_group,'(A,I0,A)')'/cell/',m,'/chi/average'
-      CALL readin_omc_xs(file_id,TRIM(cell_group),chi(m,:))
-      WRITE(cell_group,'(A,I0,A)')'/cell/',m,'/fission/average'
-      CALL readin_omc_xs(file_id,TRIM(cell_group),sigmaf(m,:))
-      WRITE(cell_group,'(A,I0,A)')'/cell/',m,'/nu-fission/average'
-      CALL readin_omc_xs(file_id,TRIM(cell_group),nuf(m,:))
+      WRITE(material_group,'(A,I0,A)')'/material/',m,'/chi/average'
+      CALL readin_omc_xs(file_id,TRIM(material_group),chi(m,:))
+      WRITE(material_group,'(A,I0,A)')'/material/',m,'/fission/average'
+      CALL readin_omc_xs(file_id,TRIM(material_group),sigmaf(m,:))
+      WRITE(material_group,'(A,I0,A)')'/material/',m,'/nu-fission/average'
+      CALL readin_omc_xs(file_id,TRIM(material_group),nuf(m,:))
       IF(MINVAL(sigmaf(m,:)) .GT. 0.0D0)nuf(m,:)=nuf(m,:)/sigmaf(m,:)
-      WRITE(cell_group,'(A,I0,A)')'/cell/',m,'/total/average'
-      CALL readin_omc_xs(file_id,TRIM(cell_group),sigmat(m,:))
-      WRITE(cell_group,'(A,I0,A)')'/cell/',m,'/scatter matrix/average'
-      CALL readin_omc_smat(file_id,TRIM(cell_group),sigmas(m,:,:,:))
+      WRITE(material_group,'(A,I0,A)')'/material/',m,'/total/average'
+      CALL readin_omc_xs(file_id,TRIM(material_group),sigmat(m,:))
+      WRITE(material_group,'(A,I0,A)')'/material/',m,'/scatter matrix/average'
+      CALL readin_omc_smat(file_id,TRIM(material_group),sigmas(m,:,:,:))
     ENDDO
 
     CALL comp_sig_a()
