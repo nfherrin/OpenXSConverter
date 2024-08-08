@@ -11,7 +11,7 @@ debug:    TYPE := _Debug
 catch:    TYPE := _Catch
 coverage: TYPE := _Coverage
 
-all:      OPT := -O3 -Wall -Werror
+all:      OPT := -O3 -Wall -Werror -fmax-stack-var-size=1000000
 MPparallel: OPT := -O3 -fopenmp
 debug:    OPT := -O0 -g -fbacktrace -ffpe-trap=zero,overflow,underflow -fcheck=all -Wall -Werror
 catch:    OPT := -O0 -g -Wall -W -Wsurprising -Werror

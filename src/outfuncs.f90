@@ -22,6 +22,8 @@ CONTAINS
         CALL out_mcnp()
       CASE('openmc')
         CALL out_openmc()
+      CASE('mpact')
+        CALL out_mpact()
       CASE DEFAULT
         STOP 'bad output format'
     ENDSELECT
@@ -419,4 +421,45 @@ CONTAINS
     ENDDO
     WRITE(32,'(A)')'], temperature=294.)'
   ENDSUBROUTINE print_xs_openmc
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  SUBROUTINE out_mpact()
+    INTEGER :: ios,m,gp,l
+    CHARACTER(10000) :: tchar1
+
+    !open xsout file
+    OPEN(UNIT=32,FILE=xsout,STATUS='REPLACE',ACTION='WRITE',IOSTAT=ios,IOMSG=tchar1)
+    IF(ios .NE. 0)THEN
+        WRITE(*,'(A)')tchar1
+        STOP
+    ENDIF
+
+    !output XS name
+    WRITE(32,'(A)')xsin
+    !output the xs characteristics
+    WRITE(32,'(A,I0,A,I0)')' ',numgroups,' ',nummats
+    !output the energy group structure
+    WRITE(tchar1,'(10000ES20.12)')eg_struc(1:numgroups)*1.0E+6
+    WRITE(32,'(A)')' '//TRIM(ADJUSTL(tchar1))
+    WRITE(32,'(A)')'!  Sigma_a       nu_f*Sigma_f       Sigma_f        Chi'
+    DO l=0,anis_out
+      WRITE(32,'(A,I0,A)')'!  P',l,' Scattering Matrix'
+    ENDDO
+    !output the xs data
+    DO m=1,nummats
+      WRITE(32,'(A,I0,A,I0)')' XSMACRO MAT_',m,' ',anis_out
+      DO gp=1,numgroups
+        WRITE(tchar1,'(4ES16.8)')sigmaa(m,gp),nuf(m,gp)*sigmaf(m,gp),sigmaf(m,gp),chi(m,gp)
+        WRITE(32,'(A)')'  '//TRIM(ADJUSTL(tchar1))
+      ENDDO
+      DO l=0,anis_out
+        DO gp=1,numgroups
+          WRITE(32,'(10000ES16.8)')sigmas(m,l+1,gp,:)
+        ENDDO
+      ENDDO
+      WRITE(32,*)
+    ENDDO
+    !close the output file
+    CLOSE(32)
+  ENDSUBROUTINE out_mpact
 END MODULE outfuncs

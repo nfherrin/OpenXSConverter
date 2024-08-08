@@ -29,10 +29,11 @@ Currently, the OpenXSConverter only supports the following input/output formats:
   * `THOR` - [THOR XS format](https://github.com/NCSU-NCSG/THOR/raw/v1.0.0/docs/usermanual/CurrentVersion/usermanual.pdf).
   * `OpenMC` - Creates an initial [Python](https://www.python.org/) script for running with [OpenMC](https://docs.openmc.org/en/stable/). This script only contains the commands to create and use the cross sections so the user must either add it to an existing OpenMC script, or create one with this initial baseline by adding geometry, settings, etc.
   * `MCNP` - [MCNP multigroup XS input format](https://mcnp.lanl.gov/pdf_files/la-12704.pdf). Note that the MCNP format uses 20 equi-probable cosine bins for anisotropic scattering, so the $P_n$ scattering approximation will not be perfectly preserved.
+  * `MPACT` - [MPACT Macroscopic multigroup XS input format](https://info.ornl.gov/sites/publications/files/Pub69404.pdf).
 
 NOTE: Anisotropic MCNP output seems to be working, however it does not match well with anisotropic OpenMC for the same XS, so caution should be used trusting it. Isotropic MCNP output however does seem to match well.
 
-There are also plans to add the following formats for input/output as well:
+There are also plans to add the following formats for input as well:
 * MPACT/VERA.
 
 ---
