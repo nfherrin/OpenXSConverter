@@ -339,7 +339,7 @@ CONTAINS
     IF (err1 .LT. 0) THEN
       STOP " *** Error opening HDF5 file"
     ENDIF
-    
+
     CALL h5gget_obj_info_idx_f(file_id,'/',0,xs_dtype,m,err1)
     xs_dtype=TRIM(ADJUSTL(xs_dtype))
     IF (err1 .LT. 0) THEN
@@ -500,6 +500,7 @@ CONTAINS
   SUBROUTINE get_thor_line(words,nwords)
     INTEGER,INTENT(OUT) :: nwords
     CHARACTER(100),INTENT(OUT) :: words(2000)
+    CHARACTER(20000) :: twords(3)
     CHARACTER(20000) :: tchar1
     INTEGER :: ios
     DO
@@ -509,8 +510,8 @@ CONTAINS
       !finding uncommented line that isn't empty
       IF(tchar1(1:1) .NE. '!' .AND. tchar1 .NE. '')THEN
         !ignore commented portions of line
-        CALL parse(tchar1,'!',words,nwords)
-        tchar1=TRIM(ADJUSTL(words(1)))
+        CALL parse(tchar1,'!',twords,nwords)
+        tchar1=TRIM(ADJUSTL(twords(1)))
         CALL parse(tchar1,' ',words,nwords)
         EXIT
       ENDIF

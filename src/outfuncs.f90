@@ -449,7 +449,7 @@ CONTAINS
     DO m=1,nummats
       WRITE(32,'(A,I0,A,I0)')' XSMACRO MAT_',m,' ',anis_out
       DO gp=1,numgroups
-        WRITE(tchar1,'(4ES16.8)')sigmaa(m,gp),nuf(m,gp)*sigmaf(m,gp),sigmaf(m,gp),chi(m,gp)
+        WRITE(tchar1,'(4ES16.8)')ABS(sigmaa(m,gp)),nuf(m,gp)*sigmaf(m,gp),sigmaf(m,gp),chi(m,gp)
         WRITE(32,'(A)')'  '//TRIM(ADJUSTL(tchar1))
       ENDDO
       DO l=0,anis_out
